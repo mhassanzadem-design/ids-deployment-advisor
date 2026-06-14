@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IDS Deployment Advisor</title>
+<style>
+  :root {
+    --bg: #0A0E1A;
+    --surface: #111827;
+    --surface2: #1C2537;
+    --border: #2A3550;
+    --accent: #3B82F6;
+    --accent2: #10B981;
+    --danger: #EF4444;
+    --warning: #F59E0B;
+    --text: #F1F5F9;
+    --muted: #94A3B8;
+    --safe: #10B981;
+    --font: 'Inter', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* Header */
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .logo-text { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
+  .logo-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .tabs { display: flex; gap: 4px; }
+  .tab {
+    padding: 6px 16px; border-radius: 6px; font-size: 13px;
+    cursor: pointer; border: 1px solid transparent; transition: all .15s;
+    background: none; color: var(--muted);
+  }
+  .tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+  .tab:hover:not(.active) { background: var(--surface2); color: var(--text); }
+
+  /* Main */
+  .main { max-width: 820px; margin: 0 auto; padding: 40px 24px; }
+
+  /* Progress */
+  .progress-bar {
+    display: flex; gap: 6px; margin-bottom: 36px;
+  }
+  .progress-step {
+    flex: 1; height: 3px; border-radius: 99px;
+    background: var(--border); transition: background .3s;
+  }
+  .progress-step.done { background: var(--accent2); }
+  .progress-step.active { background: var(--accent); }
+
+  /* Step header */
+  .step-header { margin-bottom: 24px; }
+  .step-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent); font-weight: 600; margin-bottom: 6px; }
+  .step-title { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .step-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+  /* Options */
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option {
+    padding: 14px 18px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--surface);
+    cursor: pointer; transition: all .15s;
+    display: flex; align-items: flex-start; gap: 12px;
+  }
+  .option:hover { border-color: var(--accent); background: var(--surface2); }
+  .option.selected { border-color: var(--accent); background: rgba(59,130,246,0.08); }
+  .option-dot {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 2px solid var(--border); flex-shrink: 0; margin-top: 2px;
+    transition: all .15s; position: relative;
+  }
+  .option.selected .option-dot {
+    border-color: var(--accent); background: var(--accent);
+  }
+  .option.selected .option-dot::after {
+    content: ''; position: absolute; top: 3px; left: 3px;
+    width: 8px; height: 8px; background: white; border-radius: 50%;
+  }
+  .option-main { font-size: 14px; font-weight: 500; }
+  .option-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* Nav */
+  .nav { display: flex; justify-content: space-between; margin-top: 32px; align-items: center; }
+  .btn {
+    padding: 10px 24px; border-radius: 8px; font-size: 14px;
+    font-weight: 600; cursor: pointer; border: none; transition: all .15s;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: #2563eb; }
+  .btn-primary:disabled { opacity: .4; cursor: default; }
+  .btn-ghost { background: var(--surface2); color: var(--muted); }
+  .btn-ghost:hover { color: var(--text); }
+
+  /* Dataset input section */
+  .dataset-section { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--border); }
+  .dataset-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
+  .dataset-inputs { display: flex; flex-direction: column; gap: 10px; }
+  .dataset-row { display: flex; gap: 10px; align-items: center; }
+  .dataset-row input, .dataset-row select {
+    flex: 1; padding: 9px 12px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); font-size: 13px; font-family: var(--font);
+    outline: none; transition: border .15s;
+  }
+  .dataset-row input:focus, .dataset-row select:focus { border-color: var(--accent); }
+  .dataset-row input::placeholder { color: var(--muted); }
+  .btn-add {
+    padding: 9px 14px; border-radius: 8px; background: var(--surface2);
+    border: 1px dashed var(--border); color: var(--muted);
+    font-size: 12px; cursor: pointer; white-space: nowrap;
+    transition: all .15s;
+  }
+  .btn-add:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-remove {
+    padding: 6px 10px; border-radius: 6px; background: none;
+    border: none; color: var(--muted); cursor: pointer; font-size: 16px;
+    transition: color .15s;
+  }
+  .btn-remove:hover { color: var(--danger); }
+
+  /* Result */
+  .result { display: none; }
+  .result-hero {
+    background: linear-gradient(135deg, rgba(16,185,129,.1), rgba(59,130,246,.08));
+    border: 1px solid rgba(16,185,129,.3); border-radius: 12px;
+    padding: 24px 28px; margin-bottom: 20px;
+  }
+  .result-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent2); font-weight: 600; margin-bottom: 6px; }
+  .result-strategy { font-size: 28px; font-weight: 800; letter-spacing: -1px; color: var(--text); }
+  .result-reason { font-size: 13px; color: var(--muted); margin-top: 10px; line-height: 1.7; }
+
+  .result-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+  .metric {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px;
+  }
+  .metric-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .metric-value { font-size: 22px; font-weight: 700; }
+  .metric-value.green { color: var(--accent2); }
+  .metric-value.yellow { color: var(--warning); }
+  .metric-value.red { color: var(--danger); }
+
+  .env-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px; margin-bottom: 20px;
+  }
+  .env-card-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
+  .env-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .env-row:last-child { border-bottom: none; }
+  .env-row strong { font-weight: 500; }
+  .env-bar { flex: 1; margin: 0 16px; height: 4px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .env-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+
+  .not-rec { display: flex; flex-direction: column; gap: 10px; }
+  .not-rec-item {
+    background: rgba(239,68,68,.05); border: 1px solid rgba(239,68,68,.2);
+    border-radius: 10px; padding: 14px 16px;
+  }
+  .not-rec-name { font-size: 13px; font-weight: 600; color: #FCA5A5; }
+  .not-rec-reason { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  /* Dataset comparison table */
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 14px; }
+  .compare-table th {
+    text-align: left; padding: 10px 12px;
+    background: var(--surface2); color: var(--muted);
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+    font-weight: 600;
+  }
+  .compare-table th:first-child { border-radius: 8px 0 0 0; }
+  .compare-table th:last-child { border-radius: 0 8px 0 0; }
+  .compare-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .risk-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 99px;
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+  }
+  .risk-low { background: rgba(16,185,129,.15); color: var(--accent2); }
+  .risk-med { background: rgba(245,158,11,.15); color: var(--warning); }
+  .risk-high { background: rgba(239,68,68,.15); color: var(--danger); }
+  .risk-crit { background: rgba(239,68,68,.25); color: #FCA5A5; }
+
+  .restart-row { text-align: center; margin-top: 28px; }
+
+  /* ELCF card */
+  .elcf-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 20px; margin-top: 16px;
+    display: flex; gap: 16px; align-items: flex-start;
+  }
+  .elcf-icon { font-size: 20px; flex-shrink: 0; }
+  .elcf-text { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .elcf-text strong { color: var(--text); }
+
+  .section-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+
+  @media (max-width: 600px) {
+    .header { padding: 12px 16px; }
+    .main { padding: 24px 16px; }
+    .result-metrics { grid-template-columns: 1fr 1fr; }
+    .result-strategy { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">🛡</div>
+    <div>
+      <div class="logo-text">IDS Deployment Advisor</div>
+      <div class="logo-sub">Proof-of-concept · MSc Dissertation · Cardiff Metropolitan University</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="setTab('advisor')">Deployment advisor</button>
+    <button class="tab" onclick="setTab('research')">Research mode</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Steps -->
+  <div class="progress-bar" id="progress">
+    <div class="progress-step active" id="ps1"></div>
+    <div class="progress-step" id="ps2"></div>
+    <div class="progress-step" id="ps3"></div>
+    <div class="progress-step" id="ps4"></div>
+  </div>
+
+  <!-- Step 1 -->
+  <div id="step1">
+    <div class="step-header">
+      <div class="step-label">Step 1 of 4</div>
+      <div class="step-title">Deployment environment</div>
+      <div class="step-sub">Select your operational context to calibrate risk weighting.</div>
+    </div>
+    <div class="options">
+      <div class="option" onclick="select(this,'env','Enterprise SOC','Full logging infrastructure, analyst team available')">
+        <div class="option-dot"></div>
+        <div><div class="option-main">Enterprise SOC</div><div class="option-sub">Full logging infrastructure, analyst team available</div></div>
+      </div>
+      <div class="option" onclick="select(this,'env','Healthcare IoMT','Medical device traffic, high patient-safety stakes')">
+        <div class="option-dot"></div>
+        <div><div class="option-main">Healthcare IoMT</div><div class="option-sub">Medical device traffic, high patient-safety stakes</div></div>
+      </div>
+      <div class="option" onclick="select(this,'env','Smart factory / Edge-IoT','Industrial sensors, intermittent connectivity, resource constraints')">
+        <div class="option-dot"></div>
+        <div><div class="option-main">Smart factory / Edge-IoT</div><div class="option-sub">Industrial sensors, intermittent connectivity, resource constraints</div></div>
+      </div>
+      <div class="option" onclick="select(this,'env','Critical infrastructure','Power grid, water systems — mission-critical uptime')">
+        <div class="option-dot"></div>
+        <div><div class="option-main">Critical infrastructure</div><div class="option-sub">Power grid, water systems — mission-critical uptime</div></div>
+      </div>
+      <div class="option" onclick="select(this,'env','Smart city','Urban sensor networks, mixed traffic, moderate stakes')">
+        <div class="option-dot"></div>
+        <div><div class="option-main">Smart city</div><div class="option-sub">Urban sensor networks, mixed traffic, moderate stakes</div></div>
+      </div>
+    </div>
+    <div class="nav">
+      <span style="font-size:12px;color:var(--muted)">Cardiff Metropolitan University · st20345688</span>
+      <button class="btn btn-primary" onclick="next(1)" id="n1" disabled>Continue →</button>
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div id="step2" style="display:none">
+    <div class="step-header">
+      <div class="step-label">Step 2 of 4</div>
+      <div class="step-title">Data quality confidence</div>
+      <div class="step-sub">How confident are you in the accuracy of your training data labels?</div>
+    </div>
+    <div class="options">
+      <div class="option" onclick="select(this,'quality','High','Professionally curated, manually verified labels')">
+        <div class="option-dot"></div>
+        <div><div class="option-main">High — clean, well-labelled data</div><div class="option-sub">Professionally curated, manually verified labels</div></div>
+      </div>
+      <div class="option" onclick="select(this,'quality','Medium','Some labelling errors expected from automated tools')">
+        <div class="option-dot"></div>
+        <div><div class="option-main">Medium — some labelling errors expected</div><div class="option-sub">Automated labelling with partial manual review</div></div>
+      </div>
+      <div class="option" onclick="select(this,'quality','Low','Frequent sensor faults or automated-labelling failures')">
+        <div class="option-dot"></div>
+        <div><div class="option-main">Low — frequent errors or sensor faults</div><div class="option-sub">High contamination risk from operational data collection</div></div>
+      </div>
+      <div class="option" onclick="select(this,'quality','Unknown','No visibility into labelling quality or error rates')">
+        <div class="option-dot"></div>
+        <div><div class="option-main">Unknown — no visibility into data quality</div><div class="option-sub">Typical operational SOC scenario</div></div>
+      </div>
+    </div>
+
+    <!-- Dataset characterisation -->
+    <div class="dataset-section">
+      <div class="dataset-title">Dataset characterisation (optional)</div>
+      <div class="dataset-inputs" id="datasetInputs">
+        <div class="dataset-row" id="ds-row-0">
+          <input type="text" placeholder="Dataset name (e.g. NF-UNSW-NB15-v3)" id="ds-name-0">
+          <input type="number" placeholder="Imbalance ratio (e.g. 17.5)" id="ds-ratio-0" min="1" max="100" step="0.1" style="max-width:160px">
+          <select id="ds-noise-0">
+            <option value="">Est. noise risk</option>
+            <option value="Low">Low (&lt;5%)</option>
+            <option value="Medium">Medium (5–15%)</option>
+            <option value="High">High (&gt;15%)</option>
+            <option value="Unknown">Unknown</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-add" onclick="addDataset()" style="margin-top:10px">+ Add another dataset</button>
+    </div>
+
+    <div class="nav">
+      <button class="btn btn-ghost" onclick="back(2)">← Back</button>
+      <button class="btn btn-primary" onclick="next(2)" id="n2" disabled>Continue →</button>
+    </div>
+  </div>
+
+  <!-- Step 3 -->
+  <div id="step3" style="display:none">
+    <div class="step-header">
+      <div class="step-label">Step 3 of 4</div>
+      <div class="step-title">Operational priority</div>
+      <div class="step-sub">What is the primary performance objective for your deployment?</div>
+    </div>
+    <div class="options">
+      <div class="option" onclick="select(this,'priority','Low FNR','Minimise missed attacks — maximise attack detection recall')">
+        <div class="option-dot"></div>
+        <div><div class="option-main">Minimise missed attacks (low FNR)</div><div class="option-sub">Maximise attack detection recall — accepts higher false alarm rate</div></div>
+      </div>
+      <div class="option" onclick="select(this,'priority','Balanced','Balance between detection rate and false alarm rate')">
+        <div class="option-dot"></div>
+        <div><div class="option-main">Balanced detection</div><div class="option-sub">Optimise F1-Score — balance precision and recall</div></div>
+      </div>
+      <div class="option" onclick="select(this,'priority','Low FPR','Minimise false alarms — reduce analyst workload')">
+        <div class="option-dot"></div>
+        <div><div class="option-main">Minimise false alarms (low FPR)</div><div class="option-sub">Prioritise precision — accepts higher missed-detection rate</div></div>
+      </div>
+    </div>
+    <div class="nav">
+      <button class="btn btn-ghost" onclick="back(3)">← Back</button>
+      <button class="btn btn-primary" onclick="next(3)" id="n3" disabled>Continue →</button>
+    </div>
+  </div>
+
+  <!-- Step 4 -->
+  <div id="step4" style="display:none">
+    <div class="step-header">
+      <div class="step-label">Step 4 of 4</div>
+      <div class="step-title">Resource constraints</div>
+      <div class="step-sub">What computational infrastructure is available for IDS deployment?</div>
+    </div>
+    <div class="options">
+      <div class="option" onclick="select(this,'resource','Severe','Embedded or IoT hardware — minimal CPU and memory')">
+        <div class="option-dot"></div>
+        <div><div class="option-main">Severe edge constraints — minimal compute</div><div class="option-sub">DAE preprocessing overhead (107K parameters) infeasible</div></div>
+      </div>
+      <div class="option" onclick="select(this,'resource','Moderate','Standard server — limited GPU or shared compute')">
+        <div class="option-dot"></div>
+        <div><div class="option-main">Moderate constraints</div><div class="option-sub">Preprocessing overhead acceptable; training time limited</div></div>
+      </div>
+      <div class="option" onclick="select(this,'resource','Full','SOC server or cloud — GPU-accelerated training available')">
+        <div class="option-dot"></div>
+        <div><div class="option-main">SOC server environment — full compute</div><div class="option-sub">All strategies computationally feasible</div></div>
+      </div>
+    </div>
+    <div class="nav">
+      <button class="btn btn-ghost" onclick="back(4)">← Back</button>
+      <button class="btn btn-primary" onclick="showResult()" id="n4" disabled>Generate recommendation →</button>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div id="result" class="result">
+    <div class="result-hero">
+      <div class="result-label">Recommended strategy</div>
+      <div class="result-strategy" id="res-strategy">—</div>
+      <div class="result-reason" id="res-reason">—</div>
+    </div>
+
+    <div class="result-metrics">
+      <div class="metric">
+        <div class="metric-label">Recommendation confidence</div>
+        <div class="metric-value green" id="res-conf">—</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Missed attack risk</div>
+        <div class="metric-value" id="res-fnr">—</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">False alarm risk</div>
+        <div class="metric-value" id="res-fpr">—</div>
+      </div>
+    </div>
+
+    <div class="env-card">
+      <div class="env-card-title">Deployment suitability by environment</div>
+      <div id="env-bars"></div>
+    </div>
+
+    <!-- Dataset-specific risk table -->
+    <div id="dataset-compare-section" style="display:none; margin-bottom:20px;">
+      <div class="env-card">
+        <div class="env-card-title">Dataset-specific strategy risk assessment</div>
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th>Dataset</th>
+              <th>Imbalance</th>
+              <th>Noise risk</th>
+              <th>SCE risk</th>
+              <th>Class-weight risk</th>
+              <th>Recommended</th>
+            </tr>
+          </thead>
+          <tbody id="dataset-compare-body"></tbody>
+        </table>
+        <div class="elcf-card" style="margin-top:12px">
+          <div class="elcf-icon">📊</div>
+          <div class="elcf-text">
+            <strong>ELCF note:</strong> If your dataset's clean-data FNR approaches the theoretical Label-Conflict Floor (estimated by computing feature-hash conflicts), further model optimisation yields diminishing returns. Consider improving data quality rather than model architecture.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="env-card" style="margin-bottom:20px">
+      <div class="section-title">Strategies not recommended for this context</div>
+      <div class="not-rec" id="not-rec-list"></div>
+    </div>
+
+    <div class="elcf-card">
+      <div class="elcf-icon">⚠️</div>
+      <div class="elcf-text">
+        <strong>Scope of this recommendation:</strong> This tool is a proof-of-concept research prototype validated on two NF-* benchmark datasets (NF-UNSW-NB15-v3 and NF-CICIDS2018-v3). Recommendations are evidence-based but bounded by the available experimental evidence. Independent validation on your target operational dataset is required before deployment decisions are finalised.
+        <br><br>
+        <em>Failure Mode Taxonomy: Type 1 (Gradual attenuation — Baseline) · Type 2 (Gradient inversion — Class-weight) · Type 3 (Structural incompatibility — SCE) · Type 4 (Bottleneck limitation — DAE)</em>
+      </div>
+    </div>
+
+    <div class="restart-row">
+      <button class="btn btn-ghost" onclick="restart()">← Start over</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const state = { env:'', quality:'', priority:'', resource:'', datasets:[] };
+let dsCount = 1;
+
+function setTab(t) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+function select(el, key, val, sub) {
+  const parent = el.parentElement;
+  parent.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  state[key] = val;
+  const step = {env:1,quality:2,priority:3,resource:4}[key];
+  document.getElementById('n'+step).disabled = false;
+}
+
+function next(step) {
+  document.getElementById('step'+step).style.display='none';
+  document.getElementById('step'+(step+1)).style.display='block';
+  updateProgress(step+1);
+}
+function back(step) {
+  document.getElementById('step'+step).style.display='none';
+  document.getElementById('step'+(step-1)).style.display='block';
+  updateProgress(step-1);
+}
+function updateProgress(active) {
+  for(let i=1;i<=4;i++){
+    const el = document.getElementById('ps'+i);
+    el.className = 'progress-step';
+    if(i<active) el.classList.add('done');
+    else if(i===active) el.classList.add('active');
+  }
+}
+
+function addDataset() {
+  if(dsCount >= 5) return;
+  const container = document.getElementById('datasetInputs');
+  const row = document.createElement('div');
+  row.className = 'dataset-row';
+  row.id = 'ds-row-'+dsCount;
+  row.innerHTML = `
+    <input type="text" placeholder="Dataset name" id="ds-name-${dsCount}">
+    <input type="number" placeholder="Imbalance ratio" id="ds-ratio-${dsCount}" min="1" max="100" step="0.1" style="max-width:160px">
+    <select id="ds-noise-${dsCount}">
+      <option value="">Est. noise risk</option>
+      <option value="Low">Low (&lt;5%)</option>
+      <option value="Medium">Medium (5–15%)</option>
+      <option value="High">High (&gt;15%)</option>
+      <option value="Unknown">Unknown</option>
+    </select>
+    <button class="btn-remove" onclick="removeDataset(${dsCount})">×</button>
+  `;
+  container.appendChild(row);
+  dsCount++;
+}
+function removeDataset(id) {
+  document.getElementById('ds-row-'+id).remove();
+}
+
+function getDatasets() {
+  const datasets = [];
+  for(let i=0;i<dsCount;i++){
+    const nameEl = document.getElementById('ds-name-'+i);
+    if(!nameEl) continue;
+    const name = nameEl.value.trim();
+    const ratio = parseFloat(document.getElementById('ds-ratio-'+i).value) || null;
+    const noise = document.getElementById('ds-noise-'+i).value;
+    if(name || ratio) datasets.push({name: name || 'Dataset '+(datasets.length+1), ratio, noise});
+  }
+  return datasets;
+}
+
+function getRisk(ratio, noise) {
+  const sceRisk = ratio > 10 ? 'Critical' : ratio > 7 ? 'High' : ratio > 5 ? 'Medium' : 'Low';
+  const cwRisk = (noise==='High'||noise==='Unknown') ? (ratio>10?'Critical':'High') : ratio>15?'High':ratio>8?'Medium':'Low';
+  const rec = (sceRisk==='Critical'||cwRisk==='Critical') ? 'DAE / Baseline' :
+              (sceRisk==='High'||cwRisk==='High') ? 'Baseline' : 'Any';
+  return {sceRisk, cwRisk, rec};
+}
+
+function riskBadge(r) {
+  const cls = {Low:'risk-low',Medium:'risk-med',High:'risk-high',Critical:'risk-crit'}[r]||'risk-low';
+  return `<span class="risk-badge ${cls}">${r}</span>`;
+}
+
+function showResult() {
+  const {env, quality, priority, resource} = state;
+  const datasets = getDatasets();
+
+  // Decision logic
+  let strategy, reason, conf, fnrRisk, fprRisk;
+  const uncertain = quality==='Unknown'||quality==='Low';
+  const severe = resource==='Severe';
+
+  if(severe) {
+    strategy='Baseline CNN-LSTM';
+    reason='Severe edge constraints preclude DAE preprocessing overhead (107,889 additional parameters, ~5-epoch pre-training). Baseline CNN-LSTM provides predictable Type 1 degradation — gradual and proportional to contamination — without catastrophic failure risk. Experimental evidence: F1 ≥ 0.986 across 0–30% NCAR contamination on NF-UNSW-NB15-v3; F1 ≥ 0.964 on NF-CICIDS2018-v3.';
+    conf='82%'; fnrRisk='Medium'; fprRisk='Low';
+  } else if(uncertain) {
+    strategy='DAE + CNN-LSTM';
+    reason='For environments with uncertain or low data quality, DAE preprocessing is the only evaluated strategy that maintained statistically stable performance across all contamination levels on both benchmark datasets, with no catastrophic failure mode observed. SCE and class-weight adjustment both exhibited critical failure modes under IDS-specific class imbalance conditions. Experimental evidence: DS1 multi-seed mean F1 = 0.9977 across 0–30% noise; DS2 stable across all levels.';
+    conf='91%'; fnrRisk='Low'; fprRisk='Medium';
+  } else if(quality==='High' && priority==='Low FNR') {
+    strategy='Class-weight + CNN-LSTM (with monitoring)';
+    reason='Under confirmed high data quality with low FNR priority, class-weight adjustment achieves dramatically lower false negative rate (FNR = 0.02% vs baseline 0.21% on DS1 clean data). However, contamination above ~5.4% on severely imbalanced datasets triggers catastrophic gradient inversion (Type 2 failure). Continuous FNR and F1 monitoring is essential — if F1 degrades while AUC remains high, contamination-induced collapse may be occurring.';
+    conf='74%'; fnrRisk='Low'; fprRisk='Low';
+  } else if(quality==='High') {
+    strategy='Baseline CNN-LSTM';
+    reason='Under confirmed high data quality, Baseline CNN-LSTM delivers near-ceiling performance (F1 = 0.9976, FNR = 0.21% on DS1) without the catastrophic failure risk carried by class-weight adjustment or SCE. The Estimated Label-Conflict Floor analysis indicates the model operates within 0.07 percentage points of the theoretical performance ceiling — further architectural optimisation yields diminishing returns. Resources are better directed toward data quality improvement.';
+    conf='85%'; fnrRisk='Low'; fprRisk='Low';
+  } else {
+    strategy='DAE + CNN-LSTM';
+    reason='Under medium data quality conditions, DAE preprocessing provides a safer risk-adjusted profile than baseline, with no catastrophic failure modes observed across either evaluated dataset. The indirect denoising mechanism — learning a clean-data manifold representation — provides theoretical resistance to label-level corruption that baseline lacks, without the assumption violations that cause SCE and class-weight collapse.';
+    conf='88%'; fnrRisk='Low'; fprRisk='Medium';
+  }
+
+  document.getElementById('res-strategy').textContent = strategy;
+  document.getElementById('res-reason').textContent = reason;
+  document.getElementById('res-conf').textContent = conf;
+
+  const fnrEl = document.getElementById('res-fnr');
+  fnrEl.textContent = fnrRisk;
+  fnrEl.className = 'metric-value ' + (fnrRisk==='Low'?'green':fnrRisk==='Medium'?'yellow':'red');
+
+  const fprEl = document.getElementById('res-fpr');
+  fprEl.textContent = fprRisk;
+  fprEl.className = 'metric-value ' + (fprRisk==='Low'?'green':fprRisk==='Medium'?'yellow':'red');
+
+  // Environment bars
+  const scores = {
+    'Enterprise SOC': 91, 'Healthcare IoMT': 92, 'Smart factory / Edge-IoT': severe?78:90,
+    'Critical infrastructure': 89, 'Smart city': 88
+  };
+  scores[env] = Math.min(99, (scores[env]||88)+2);
+  let envHtml='';
+  for(const [e,s] of Object.entries(scores)) {
+    const bold = e===env ? ' style="font-weight:700;color:var(--text)"':'';
+    envHtml += `<div class="env-row"><span${bold}>${e}${e===env?' ←':''}</span><div class="env-bar"><div class="env-fill" style="width:${s}%"></div></div><span style="font-size:12px;color:var(--muted)">${s}%</span></div>`;
+  }
+  document.getElementById('env-bars').innerHTML = envHtml;
+
+  // Dataset-specific table
+  if(datasets.length > 0) {
+    document.getElementById('dataset-compare-section').style.display = 'block';
+    let tableHtml = '';
+    for(const ds of datasets) {
+      if(ds.ratio) {
+        const {sceRisk,cwRisk,rec} = getRisk(ds.ratio, ds.noise);
+        tableHtml += `<tr>
+          <td><strong>${ds.name}</strong></td>
+          <td style="font-family:var(--mono)">${ds.ratio}:1</td>
+          <td>${ds.noise ? riskBadge(ds.noise) : '<span style="color:var(--muted)">—</span>'}</td>
+          <td>${riskBadge(sceRisk)}</td>
+          <td>${riskBadge(cwRisk)}</td>
+          <td style="color:var(--accent2);font-weight:600">${rec}</td>
+        </tr>`;
+      }
+    }
+    document.getElementById('dataset-compare-body').innerHTML = tableHtml || '<tr><td colspan="6" style="color:var(--muted)">Add imbalance ratios above to see dataset-specific assessment.</td></tr>';
+  }
+
+  // Not recommended
+  const notRec = [];
+  if(!strategy.includes('SCE')) notRec.push({name:'SCE loss function', reason:'Collapses to all-benign prediction above ~5% noise under severe class imbalance (>10:1). Type 3 structural incompatibility — degrades even on clean data when imbalance exceeds threshold. Evidence: FNR = 100% at 5% noise on DS1 (17.5:1 imbalance).'});
+  if(!strategy.includes('Class-weight')) notRec.push({name:'Class-weight + CNN-LSTM', reason:'Collapses to all-attack prediction via gradient inversion above ~5.4% contamination on DS1 (17.5:1 imbalance) and ~15% on DS2 (6.7:1). Type 2 failure: AUC remains near-perfect (0.9992) whilst F1 collapses to 0.1030 — making this failure invisible to AUC-only monitoring.'});
+  if(strategy.includes('DAE')) notRec.push({name:'Baseline CNN-LSTM (alone)', reason:'Lacks the denoising representational buffer that DAE provides. Under uncertain data quality, provides Type 1 degradation only — gradual but unprotected against feature-level corruption from sensor faults or communication errors.'});
+
+  document.getElementById('not-rec-list').innerHTML = notRec.map(n =>
+    `<div class="not-rec-item"><div class="not-rec-name">${n.name}</div><div class="not-rec-reason">${n.reason}</div></div>`
+  ).join('');
+
+  // Show result
+  for(let i=1;i<=4;i++) document.getElementById('step'+i).style.display='none';
+  document.getElementById('progress').style.display='none';
+  const res = document.getElementById('result');
+  res.style.display='block';
+}
+
+function restart() {
+  Object.assign(state, {env:'',quality:'',priority:'',resource:''});
+  document.querySelectorAll('.option').forEach(o=>o.classList.remove('selected'));
+  for(let i=1;i<=4;i++) document.getElementById('n'+i).disabled=true;
+  document.getElementById('result').style.display='none';
+  document.getElementById('dataset-compare-section').style.display='none';
+  document.getElementById('progress').style.display='flex';
+  document.getElementById('step1').style.display='block';
+  updateProgress(1);
+}
+</script>
+</body>
+</html>
