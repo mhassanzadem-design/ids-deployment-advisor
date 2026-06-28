@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IDS Deployment Advisor — Maryam Hassanzadeh, MSc Cybersecurity</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e2d45;
+    --border-bright: #2a3f5f;
+    --accent: #3b82f6;
+    --accent-glow: rgba(59,130,246,0.15);
+    --accent2: #06b6d4;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --safe: #10b981;
+    --text: #e2e8f0;
+    --text-dim: #64748b;
+    --text-mid: #94a3b8;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', sans-serif;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* HEADER */
+  header {
+    position: fixed; top:0; left:0; right:0; z-index:100;
+    background: rgba(10,14,26,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px;
+  }
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .logo-text { font-size: 14px; font-weight: 600; }
+  .logo-sub { font-size: 11px; color: var(--text-dim); font-weight: 400; }
+
+  .nav-tabs { display: flex; gap: 4px; }
+  .nav-tab {
+    padding: 6px 16px; border-radius: 6px; font-size: 13px; font-weight: 500;
+    cursor: pointer; border: 1px solid transparent;
+    transition: all 0.2s;
+  }
+  .nav-tab.active {
+    background: var(--accent); color: white; border-color: var(--accent);
+  }
+  .nav-tab:not(.active) {
+    color: var(--text-dim); border-color: var(--border);
+  }
+  .nav-tab:not(.active):hover { border-color: var(--accent); color: var(--text); }
+
+  /* MAIN */
+  main { padding-top: 60px; }
+
+  /* ADVISOR MODE */
+  #advisor-mode { display: block; }
+  #research-mode { display: none; }
+
+  /* PROGRESS BAR */
+  .progress-wrap {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+  }
+  .progress-inner {
+    max-width: 720px; margin: 0 auto;
+    display: flex; align-items: center; gap: 0;
+    height: 48px;
+  }
+  .prog-step {
+    flex: 1; display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--text-dim); font-weight: 500;
+    padding: 0 8px; cursor: default;
+  }
+  .prog-step.active { color: var(--accent); }
+  .prog-step.done { color: var(--safe); }
+  .prog-dot {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--border); display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; flex-shrink: 0;
+  }
+  .prog-step.active .prog-dot { background: var(--accent); color: white; }
+  .prog-step.done .prog-dot { background: var(--safe); color: white; }
+  .prog-line { flex: 1; height: 1px; background: var(--border); }
+  .prog-step.done + .prog-line { background: var(--safe); }
+
+  /* STEPS */
+  .step { display: none; }
+  .step.active { display: block; }
+
+  .step-body {
+    max-width: 720px; margin: 0 auto;
+    padding: 3rem 2rem;
+  }
+
+  .step-label {
+    font-family: var(--mono); font-size: 11px; color: var(--accent);
+    letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px;
+  }
+  .step-title { font-size: 28px; font-weight: 700; margin-bottom: 6px; }
+  .step-desc { font-size: 14px; color: var(--text-mid); margin-bottom: 2rem; }
+
+  /* OPTIONS */
+  .options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 2rem; }
+  .option {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex; align-items: flex-start; gap: 14px;
+    background: var(--surface);
+  }
+  .option:hover { border-color: var(--accent); background: var(--accent-glow); }
+  .option.selected { border-color: var(--accent); background: var(--accent-glow); }
+  .option-radio {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 2px solid var(--border-bright);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 2px; transition: all 0.15s;
+  }
+  .option.selected .option-radio {
+    border-color: var(--accent);
+    background: var(--accent);
+  }
+  .option.selected .option-radio::after {
+    content: ''; width: 6px; height: 6px;
+    background: white; border-radius: 50%;
+  }
+  .option-text strong { font-size: 15px; font-weight: 600; display: block; margin-bottom: 2px; }
+  .option-text span { font-size: 13px; color: var(--text-mid); }
+
+  /* IMBALANCE SLIDER */
+  .imbalance-section {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px; margin-bottom: 2rem;
+  }
+  .imbalance-label { font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--text-mid); }
+  .slider-wrap { display: flex; align-items: center; gap: 16px; }
+  .slider-wrap input[type=range] {
+    flex: 1; height: 4px; cursor: pointer;
+    accent-color: var(--accent);
+  }
+  .slider-val {
+    font-family: var(--mono); font-size: 20px; font-weight: 500;
+    color: var(--accent); min-width: 60px; text-align: right;
+  }
+  .slider-tags {
+    display: flex; justify-content: space-between;
+    font-size: 11px; color: var(--text-dim); margin-top: 6px;
+  }
+
+  /* BUTTONS */
+  .btn-row { display: flex; gap: 12px; justify-content: flex-end; }
+  .btn {
+    padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: 600;
+    cursor: pointer; border: none; transition: all 0.15s;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: #2563eb; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-secondary {
+    background: transparent; color: var(--text-mid);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--text-mid); color: var(--text); }
+
+  /* RESULT */
+  #result { display: none; }
+  #result.show { display: block; }
+
+  .result-hero {
+    background: linear-gradient(135deg, var(--surface) 0%, rgba(59,130,246,0.08) 100%);
+    border: 1px solid var(--border-bright);
+    border-radius: 14px; padding: 32px; margin-bottom: 24px;
+    position: relative; overflow: hidden;
+  }
+  .result-hero::before {
+    content: ''; position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .result-eyebrow {
+    font-family: var(--mono); font-size: 11px; color: var(--accent);
+    letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px;
+  }
+  .result-strategy {
+    font-size: 36px; font-weight: 700; margin-bottom: 8px;
+    background: linear-gradient(135deg, #fff, var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .result-rationale { font-size: 14px; color: var(--text-mid); max-width: 560px; line-height: 1.7; }
+
+  .metrics-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 24px; }
+  .metric-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px;
+  }
+  .metric-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .metric-val { font-size: 28px; font-weight: 700; }
+  .metric-val.high { color: var(--safe); }
+  .metric-val.med { color: var(--warn); }
+  .metric-val.low-risk { color: var(--accent); }
+
+  /* RISK TABLE */
+  .section-title {
+    font-size: 13px; font-weight: 700; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    margin-bottom: 14px; padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .risk-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+  .risk-table th {
+    text-align: left; font-size: 11px; color: var(--text-dim);
+    padding: 8px 12px; border-bottom: 1px solid var(--border);
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .risk-table td {
+    padding: 12px; border-bottom: 1px solid var(--border);
+    font-size: 13px; vertical-align: top;
+  }
+  .risk-table tr:last-child td { border-bottom: none; }
+  .risk-table tr:hover td { background: var(--surface2); }
+  .badge {
+    display: inline-block; padding: 2px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+  }
+  .badge-safe { background: rgba(16,185,129,0.15); color: var(--safe); }
+  .badge-warn { background: rgba(245,158,11,0.15); color: var(--warn); }
+  .badge-danger { background: rgba(239,68,68,0.15); color: var(--danger); }
+  .badge-info { background: rgba(59,130,246,0.15); color: var(--accent); }
+
+  /* NOT RECOMMENDED */
+  .not-rec-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+  .not-rec-item {
+    background: rgba(239,68,68,0.05); border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 10px; padding: 16px;
+  }
+  .not-rec-name { font-size: 14px; font-weight: 600; color: #fca5a5; margin-bottom: 4px; }
+  .not-rec-why { font-size: 13px; color: var(--text-mid); }
+  .type-tag {
+    font-family: var(--mono); font-size: 10px; color: var(--danger);
+    background: rgba(239,68,68,0.1); padding: 2px 8px; border-radius: 4px;
+    margin-left: 8px; vertical-align: middle;
+  }
+
+  /* ELCF BOX */
+  .elcf-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 0 10px 10px 0; padding: 16px 20px; margin-bottom: 24px;
+  }
+  .elcf-title { font-size: 12px; font-weight: 700; color: var(--accent2); margin-bottom: 6px; }
+  .elcf-text { font-size: 13px; color: var(--text-mid); line-height: 1.7; }
+
+  /* SCOPE WARNING */
+  .scope-box {
+    background: rgba(245,158,11,0.05); border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 10px; padding: 16px 20px; margin-bottom: 24px;
+    font-size: 13px; color: var(--text-mid); line-height: 1.7;
+  }
+  .scope-box strong { color: var(--warn); }
+
+  /* TAXONOMY PILLS */
+  .taxonomy-pills {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px;
+  }
+  .taxonomy-pill {
+    padding: 4px 12px; border-radius: 20px;
+    font-family: var(--mono); font-size: 11px; font-weight: 500;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+
+  .start-over {
+    display: flex; justify-content: center; padding: 8px 0 32px;
+  }
+
+  /* ===================== RESEARCH MODE ===================== */
+  #research-mode {
+    max-width: 900px; margin: 0 auto; padding: 3rem 2rem;
+  }
+  .research-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+  .research-sub { font-size: 14px; color: var(--text-mid); margin-bottom: 2rem; }
+
+  .taxonomy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 2rem; }
+  @media(max-width:640px){ .taxonomy-grid{ grid-template-columns: 1fr; } }
+
+  .tax-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .tax-card:hover { border-color: var(--accent); }
+  .tax-card.expanded { border-color: var(--accent); background: var(--surface2); }
+
+  .tax-header { display: flex; align-items: flex-start; gap: 12px; }
+  .tax-num {
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+    padding: 3px 8px; border-radius: 4px; flex-shrink: 0;
+  }
+  .t1 { background: rgba(16,185,129,0.15); color: var(--safe); }
+  .t2 { background: rgba(245,158,11,0.15); color: var(--warn); }
+  .t3a { background: rgba(239,68,68,0.15); color: var(--danger); }
+  .t3b { background: rgba(239,68,68,0.10); color: #f87171; }
+  .t4 { background: rgba(59,130,246,0.15); color: var(--accent); }
+
+  .tax-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .tax-strategy { font-size: 12px; color: var(--text-dim); font-family: var(--mono); }
+  .tax-body { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .tax-card.expanded .tax-body { display: block; }
+  .tax-row { display: flex; gap: 8px; margin-bottom: 10px; font-size: 13px; }
+  .tax-key { color: var(--text-dim); min-width: 100px; flex-shrink: 0; }
+  .tax-val { color: var(--text); }
+  .tax-evidence {
+    margin-top: 12px; padding: 12px;
+    background: rgba(0,0,0,0.3); border-radius: 6px;
+    font-family: var(--mono); font-size: 12px; color: var(--accent2);
+  }
+
+  /* DATASET COMPARISON */
+  .ds-comparison { margin-bottom: 2rem; }
+  .ds-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+  @media(max-width:640px){ .ds-grid{ grid-template-columns: 1fr; } }
+  .ds-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px;
+  }
+  .ds-name { font-family: var(--mono); font-size: 12px; color: var(--accent); margin-bottom: 8px; }
+  .ds-stat { font-size: 12px; color: var(--text-mid); margin-bottom: 4px; }
+  .ds-stat span { color: var(--text); font-weight: 600; }
+  .ds-strategies { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+  .ds-strat-row { display: flex; justify-content: space-between; font-size: 12px; }
+
+  /* FINDINGS */
+  .finding-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 2rem; }
+  .finding {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 20px;
+    display: flex; gap: 16px;
+  }
+  .finding-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+  .finding-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .finding-body { font-size: 13px; color: var(--text-mid); line-height: 1.6; }
+  .finding-num {
+    font-family: var(--mono); font-size: 11px; color: var(--accent);
+    background: var(--accent-glow); padding: 2px 8px; border-radius: 4px;
+    display: inline-block; margin-top: 6px;
+  }
+
+  /* MISC */
+  .divider { height: 1px; background: var(--border); margin: 2rem 0; }
+  .section-wrap { margin-bottom: 2rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🛡</div>
+    <div>
+      <div class="logo-text">IDS Deployment Advisor</div>
+      <div class="logo-sub">Proof-of-concept · MSc Cybersecurity · Cardiff Metropolitan University</div>
+    </div>
+  </div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="switchMode('advisor')">Deployment advisor</div>
+    <div class="nav-tab" onclick="switchMode('research')">Research mode</div>
+  </div>
+</header>
+
+<main>
+
+<!-- ============ ADVISOR MODE ============ -->
+<div id="advisor-mode">
+
+  <div class="progress-wrap">
+    <div class="progress-inner">
+      <div class="prog-step active" id="ps1">
+        <div class="prog-dot">1</div>Environment
+      </div>
+      <div class="prog-line" id="pl1"></div>
+      <div class="prog-step" id="ps2">
+        <div class="prog-dot">2</div>Data quality
+      </div>
+      <div class="prog-line" id="pl2"></div>
+      <div class="prog-step" id="ps3">
+        <div class="prog-dot">3</div>Priority
+      </div>
+      <div class="prog-line" id="pl3"></div>
+      <div class="prog-step" id="ps4">
+        <div class="prog-dot">4</div>Constraints
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="step active" id="step1">
+    <div class="step-body">
+      <div class="step-label">Step 1 of 4</div>
+      <div class="step-title">Deployment environment</div>
+      <div class="step-desc">Select your operational context to calibrate risk weighting.</div>
+
+      <div class="options" id="env-options">
+        <div class="option" onclick="select('env','soc',this)">
+          <div class="option-radio"></div>
+          <div class="option-text">
+            <strong>Enterprise SOC</strong>
+            <span>Full logging infrastructure, analyst team available, benign-majority traffic typical</span>
+          </div>
+        </div>
+        <div class="option" onclick="select('env','iomt',this)">
+          <div class="option-radio"></div>
+          <div class="option-text">
+            <strong>Healthcare IoMT</strong>
+            <span>Medical device traffic, high patient-safety stakes, regulatory compliance required</span>
+          </div>
+        </div>
+        <div class="option" onclick="select('env','edge',this)">
+          <div class="option-radio"></div>
+          <div class="option-text">
+            <strong>Smart factory / Edge-IoT</strong>
+            <span>Industrial sensors, intermittent connectivity, attack-majority traffic possible</span>
+          </div>
+        </div>
+        <div class="option" onclick="select('env','infra',this)">
+          <div class="option-radio"></div>
+          <div class="option-text">
+            <strong>Critical infrastructure</strong>
+            <span>Power grid, water systems — mission-critical uptime, zero tolerance for missed attacks</span>
+          </div>
+        </div>
+        <div class="option" onclick="select('env','city',this)">
+          <div class="option-radio"></div>
+          <div class="option-text">
+            <strong>Smart city</strong>
+            <span>Urban sensor networks, mixed traffic profile, moderate operational stakes</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="imbalance-section">
+        <div class="imbalance-label">Estimated class imbalance ratio (benign : attack)</div>
+        <div class="slider-wrap">
+          <input type="range" id="imbalance-slider" min="0.1" max="20" step="0.1" value="8"
+            oninput="updateSlider(this.value)">
+          <div class="slider-val" id="slider-display">8.0 : 1</div>
+        </div>
+        <div class="slider-tags">
+          <span>Attack-majority (0.1:1)</span>
+          <span>Balanced (1:1)</span>
+          <span>Moderate (6.7:1)</span>
+          <span>Severe (17.5:1)</span>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="goStep(2)" id="btn1">Continue →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step" id="step2">
+    <div class="step-body">
+      <div class="step-label">Step 2 of 4</div>
+      <div class="step-title">Data quality confidence</div>
+      <div class="step-desc">How reliable are the labels in your training data?</div>
+
+      <div class="options">
+        <div class="option" onclick="select('quality','high',this)">
+          <div class="option-radio"></div>
+          <div class="option-text">
+            <strong>High — clean, well-labelled data</strong>
+            <span>Professionally curated, manually verified labels — estimated noise &lt;5%</span>
+          </div>
+        </div>
+        <div class="option" onclick="select('quality','medium',this)">
+          <div class="option-radio"></div>
+          <div class="option-text">
+            <strong>Medium — some labelling errors expected</strong>
+            <span>Automated labelling with partial manual review — estimated noise 5–15%</span>
+          </div>
+        </div>
+        <div class="option" onclick="select('quality','low',this)">
+          <div class="option-radio"></div>
+          <div class="option-text">
+            <strong>Low — frequent errors or sensor faults</strong>
+            <span>High contamination risk from operational data collection — noise &gt;15%</span>
+          </div>
+        </div>
+        <div class="option" onclick="select('quality','unknown',this)">
+          <div class="option-radio"></div>
+          <div class="option-text">
+            <strong>Unknown — no visibility into data quality</strong>
+            <span>Typical in first-deployment SOC scenarios — apply conservative defaults</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goStep(1)">← Back</button>
+        <button class="btn btn-primary" onclick="goStep(3)">Continue →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step" id="step3">
+    <div class="step-body">
+      <div class="step-label">Step 3 of 4</div>
+      <div class="step-title">Operational priority</div>
+      <div class="step-desc">What matters most for your deployment outcome?</div>
+
+      <div class="options">
+        <div class="option" onclick="select('priority','fnr',this)">
+          <div class="option-radio"></div>
+          <div class="option-text">
+            <strong>Minimise missed attacks (low FNR)</strong>
+            <span>Maximise attack detection recall — accepts higher false alarm rate. Critical for healthcare and infrastructure.</span>
+          </div>
+        </div>
+        <div class="option" onclick="select('priority','balanced',this)">
+          <div class="option-radio"></div>
+          <div class="option-text">
+            <strong>Balanced detection</strong>
+            <span>Optimise F1-Score — balance precision and recall. Standard SOC deployment.</span>
+          </div>
+        </div>
+        <div class="option" onclick="select('priority','fpr',this)">
+          <div class="option-radio"></div>
+          <div class="option-text">
+            <strong>Minimise false alarms (low FPR)</strong>
+            <span>Prioritise precision — accepts higher missed-detection rate. High-volume, analyst-constrained environments.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goStep(2)">← Back</button>
+        <button class="btn btn-primary" onclick="goStep(4)">Continue →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="step" id="step4">
+    <div class="step-body">
+      <div class="step-label">Step 4 of 4</div>
+      <div class="step-title">Resource constraints</div>
+      <div class="step-desc">What computational infrastructure is available?</div>
+
+      <div class="options">
+        <div class="option" onclick="select('resource','edge',this)">
+          <div class="option-radio"></div>
+          <div class="option-text">
+            <strong>Severe edge constraints — minimal compute</strong>
+            <span>DAE preprocessing (107K parameters) may be infeasible. Inference latency critical.</span>
+          </div>
+        </div>
+        <div class="option" onclick="select('resource','moderate',this)">
+          <div class="option-radio"></div>
+          <div class="option-text">
+            <strong>Moderate constraints</strong>
+            <span>Preprocessing overhead acceptable; training time limited to hours not days.</span>
+          </div>
+        </div>
+        <div class="option" onclick="select('resource','full',this)">
+          <div class="option-radio"></div>
+          <div class="option-text">
+            <strong>SOC server environment — full compute</strong>
+            <span>All strategies computationally feasible. GPU training available.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goStep(3)">← Back</button>
+        <button class="btn btn-primary" onclick="generateResult()">Generate recommendation →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="result">
+    <div class="step-body">
+
+      <div class="result-hero">
+        <div class="result-eyebrow">Recommended strategy</div>
+        <div class="result-strategy" id="rec-strategy">—</div>
+        <div class="result-rationale" id="rec-rationale">—</div>
+      </div>
+
+      <div class="metrics-row">
+        <div class="metric-card">
+          <div class="metric-label">Recommendation confidence</div>
+          <div class="metric-val" id="rec-confidence">—</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Missed attack risk</div>
+          <div class="metric-val" id="rec-fnr-risk">—</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">False alarm risk</div>
+          <div class="metric-val" id="rec-fpr-risk">—</div>
+        </div>
+      </div>
+
+      <div class="section-wrap">
+        <div class="section-title">Strategy risk assessment for your context</div>
+        <table class="risk-table">
+          <thead>
+            <tr>
+              <th>Strategy</th>
+              <th>Risk level</th>
+              <th>Failure mode</th>
+              <th>Verdict</th>
+            </tr>
+          </thead>
+          <tbody id="risk-table-body"></tbody>
+        </table>
+      </div>
+
+      <div class="section-wrap">
+        <div class="section-title">Strategies not recommended for this context</div>
+        <div class="not-rec-list" id="not-rec-list"></div>
+      </div>
+
+      <div class="elcf-box">
+        <div class="elcf-title">📐 Estimated Label-Conflict Floor (ELCF)</div>
+        <div class="elcf-text" id="elcf-text">
+          If your dataset's clean-data FNR approaches the theoretical Label-Conflict Floor
+          (estimated by computing feature-hash conflicts in your NetFlow data), further model
+          optimisation yields diminishing returns. In NF-UNSW-NB15-v3, 642 hash conflicts
+          produced an ELCF of ~0.14% FNR. Consider improving data quality rather than model
+          architecture when operating near this floor.
+        </div>
+      </div>
+
+      <div class="scope-box">
+        <strong>⚠ Scope of this recommendation:</strong> This tool is a proof-of-concept research
+        prototype validated on NF-UNSW-NB15-v3 (17.5:1 imbalance) and NF-CICIDS2018-v3 (6.7:1
+        imbalance). Failure Mode Types 2 and 3 are based on single-seed reference runs and should
+        be treated as empirically motivated hypotheses. Independent multi-seed validation on your
+        target dataset is required before finalising deployment decisions.
+      </div>
+
+      <div class="taxonomy-pills">
+        <span class="taxonomy-pill">Type 1: Gradual Attenuation — Baseline/DAE</span>
+        <span class="taxonomy-pill">Type 2: Gradient Inversion — Class-weight</span>
+        <span class="taxonomy-pill">Type 3: Structural Incompatibility — SCE</span>
+        <span class="taxonomy-pill">Type 4: Bottleneck Limitation — DAE</span>
+      </div>
+
+      <div class="start-over">
+        <button class="btn btn-secondary" onclick="resetAdvisor()">← Start over</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /advisor-mode -->
+
+
+<!-- ============ RESEARCH MODE ============ -->
+<div id="research-mode">
+  <div style="max-width:900px;margin:0 auto;padding:3rem 2rem;">
+
+    <div class="research-title">Failure Mode Taxonomy</div>
+    <div class="research-sub">
+      Five mechanistically distinct failure behaviours identified across three NF-* benchmark datasets.
+      Click any card to expand the full evidence and deployment rule.
+    </div>
+
+    <div class="taxonomy-grid">
+
+      <div class="tax-card" onclick="toggleTax(this)">
+        <div class="tax-header">
+          <div class="tax-num t1">TYPE 1</div>
+          <div>
+            <div class="tax-name">Gradual Attenuation</div>
+            <div class="tax-strategy">Baseline CNN-LSTM · DAE · SCE/CW on DS3</div>
+          </div>
+        </div>
+        <div class="tax-body">
+          <div class="tax-row"><span class="tax-key">Mechanism</span><span class="tax-val">Noise corrupts decision boundary proportionally; no discrete failure threshold; degradation monotonic with contamination level.</span></div>
+          <div class="tax-row"><span class="tax-key">Risk level</span><span class="tax-val"><span class="badge badge-safe">LOW</span></span></div>
+          <div class="tax-row"><span class="tax-key">Deployment rule</span><span class="tax-val">Monitor FNR trend over time; no pre-deployment exclusion required.</span></div>
+          <div class="tax-evidence">Evidence: Baseline DS1 — all p&gt;0.43 across N=5 seeds, 0–30% noise. DAE DS1 — mean F1 within 0.0005 of Baseline at every level.</div>
+        </div>
+      </div>
+
+      <div class="tax-card" onclick="toggleTax(this)">
+        <div class="tax-header">
+          <div class="tax-num t2">TYPE 2</div>
+          <div>
+            <div class="tax-name">Gradient Inversion</div>
+            <div class="tax-strategy">Class-weight adjustment · DS1 (17.5:1)</div>
+          </div>
+        </div>
+        <div class="tax-body">
+          <div class="tax-row"><span class="tax-key">Mechanism</span><span class="tax-val">Inverse-frequency amplification applies equally to genuine and noise-corrupted minority labels, inverting gradient direction. AUC remains intact throughout collapse.</span></div>
+          <div class="tax-row"><span class="tax-key">Risk level</span><span class="tax-val"><span class="badge badge-danger">CRITICAL</span></span></div>
+          <div class="tax-row"><span class="tax-key">Key finding</span><span class="tax-val">AUC-F1 divergence: AUC &gt;0.999 while F1 collapses — invisible to AUC-only monitoring dashboards.</span></div>
+          <div class="tax-row"><span class="tax-key">Deployment rule</span><span class="tax-val">High risk when benign:attack &gt;10:1. Dual-metric monitoring (FNR + F1 + AUC) mandatory.</span></div>
+          <div class="tax-evidence">Evidence: CW DS1 (single-seed reference) — F1=0.9958 at 0% noise; F1=0.1030 from 10% noise. Gradient inversion threshold ~5.4% estimated.</div>
+        </div>
+      </div>
+
+      <div class="tax-card" onclick="toggleTax(this)">
+        <div class="tax-header">
+          <div class="tax-num t3a">TYPE 3a</div>
+          <div>
+            <div class="tax-name">Structural Incompatibility</div>
+            <div class="tax-strategy">SCE Loss · DS1 (17.5:1) · Single-seed exploratory</div>
+          </div>
+        </div>
+        <div class="tax-body">
+          <div class="tax-row"><span class="tax-key">Mechanism</span><span class="tax-val">RCE term penalises confident majority predictions. Under severe imbalance, confident benign prediction is statistically optimal — not pathological. RCE amplifies the dominant gradient.</span></div>
+          <div class="tax-row"><span class="tax-key">Risk level</span><span class="tax-val"><span class="badge badge-danger">CRITICAL (exploratory)</span></span></div>
+          <div class="tax-row"><span class="tax-key">Key finding</span><span class="tax-val">F1=0.8474 (FNR=25.6%) at 0% noise; collapse (F1=0.0000) at 5%, 10%, 20%, 30%; partial bistable recovery at 15%.</span></div>
+          <div class="tax-row"><span class="tax-key">Deployment rule</span><span class="tax-val">Avoid SCE when benign:attack substantially &gt;10:1. Failure unlikely to be resolved by simple parameter tuning without altering loss-design assumptions.</span></div>
+          <div class="tax-evidence">Evidence: SCE DS1 (seed=42 reference run only). alpha=0.01, beta=0.1. Multi-seed verification not conducted — treat as hypothesis.</div>
+        </div>
+      </div>
+
+      <div class="tax-card" onclick="toggleTax(this)">
+        <div class="tax-header">
+          <div class="tax-num t3b">TYPE 3b</div>
+          <div>
+            <div class="tax-name">Boundary Instability</div>
+            <div class="tax-strategy">SCE Loss · DS2 (6.72:1) · N=5 verified</div>
+          </div>
+        </div>
+        <div class="tax-body">
+          <div class="tax-row"><span class="tax-key">Mechanism</span><span class="tax-val">Same RCE mechanism at moderate imbalance. Failure is probabilistic and partial — FNR ~41–42% without complete collapse. Highly seed-dependent.</span></div>
+          <div class="tax-row"><span class="tax-key">Risk level</span><span class="tax-val"><span class="badge badge-danger">HIGH — operationally dangerous</span></span></div>
+          <div class="tax-row"><span class="tax-key">Key finding</span><span class="tax-val">More dangerous than Type 3a: single-run F1 looks acceptable (~0.967) while FNR ranges 19–100% across seeds. Evades single-metric monitoring.</span></div>
+          <div class="tax-row"><span class="tax-key">Deployment rule</span><span class="tax-val">Per-seed FNR tracking mandatory. Never rely on single training run for SCE at moderate imbalance.</span></div>
+          <div class="tax-evidence">Evidence: SCE DS2 — N=5 seeds × 6 noise levels = 30 runs. FNR 19–100% across runs. Mean FNR ~41.7% (degenerate state).</div>
+        </div>
+      </div>
+
+      <div class="tax-card" onclick="toggleTax(this)">
+        <div class="tax-header">
+          <div class="tax-num t4">TYPE 4</div>
+          <div>
+            <div class="tax-name">Bottleneck Limitation</div>
+            <div class="tax-strategy">DAE Preprocessing · DS2 vs DS1</div>
+          </div>
+        </div>
+        <div class="tax-body">
+          <div class="tax-row"><span class="tax-key">Mechanism</span><span class="tax-val">Fixed-capacity DAE encoder (64-dim bottleneck) discards discriminatively relevant variance when attack category diversity exceeds representation capacity.</span></div>
+          <div class="tax-row"><span class="tax-key">Risk level</span><span class="tax-val"><span class="badge badge-warn">LOW-MODERATE</span></span></div>
+          <div class="tax-row"><span class="tax-key">Key finding</span><span class="tax-val">DAE 0.001–0.002 below Baseline on DS2 (15 attack categories) vs DS1 (9 categories). Statistically significant at p&lt;0.02 (N=5).</span></div>
+          <div class="tax-row"><span class="tax-key">Deployment rule</span><span class="tax-val">Scale bottleneck dimensionality proportionally to attack category count. DAE still preferred over SCE/CW under severe imbalance.</span></div>
+          <div class="tax-evidence">Evidence: DAE DS2 N=5 — consistently 0.001–0.002 below Baseline. DAE 107,889 params; bottleneck input(49)→256→128→64→128→256→49.</div>
+        </div>
+      </div>
+
+    </div><!-- /taxonomy-grid -->
+
+    <div class="divider"></div>
+
+    <div class="section-wrap">
+      <div class="section-title">Dataset structural comparison</div>
+      <div class="ds-grid">
+        <div class="ds-card">
+          <div class="ds-name">NF-UNSW-NB15-v3 (DS1)</div>
+          <div class="ds-stat">Imbalance: <span>17.5:1 benign-majority</span></div>
+          <div class="ds-stat">Records: <span>2,365,424</span></div>
+          <div class="ds-stat">Attack categories: <span>10</span></div>
+          <div class="ds-stat">ELCF: <span>~0.14% (642 conflicts)</span></div>
+          <div class="ds-strategies">
+            <div class="ds-strat-row"><span>Baseline</span><span class="badge badge-safe">SAFE</span></div>
+            <div class="ds-strat-row"><span>DAE</span><span class="badge badge-safe">SAFE</span></div>
+            <div class="ds-strat-row"><span>SCE</span><span class="badge badge-danger">TYPE 3a ⚠</span></div>
+            <div class="ds-strat-row"><span>Class-weight</span><span class="badge badge-danger">TYPE 2 ⚠</span></div>
+          </div>
+        </div>
+        <div class="ds-card">
+          <div class="ds-name">NF-CICIDS2018-v3 (DS2)</div>
+          <div class="ds-stat">Imbalance: <span>6.72:1 benign-majority</span></div>
+          <div class="ds-stat">Sample: <span>~50,000 (5%, Colab RAM limit)</span></div>
+          <div class="ds-stat">Attack categories: <span>15</span></div>
+          <div class="ds-stat">Baseline sig. degrades from: <span>10% noise (p=0.044)</span></div>
+          <div class="ds-strategies">
+            <div class="ds-strat-row"><span>Baseline</span><span class="badge badge-safe">SAFE</span></div>
+            <div class="ds-strat-row"><span>DAE</span><span class="badge badge-warn">TYPE 4 (minor)</span></div>
+            <div class="ds-strat-row"><span>SCE</span><span class="badge badge-danger">TYPE 3b ⚠</span></div>
+            <div class="ds-strat-row"><span>Class-weight</span><span class="badge badge-safe">SAFE (N=5)</span></div>
+          </div>
+        </div>
+        <div class="ds-card">
+          <div class="ds-name">NF-ToN-IoT-v2 (DS3)</div>
+          <div class="ds-stat">Imbalance: <span>0.38:1 attack-majority</span></div>
+          <div class="ds-stat">Records: <span>1,313,588 (10% sample)</span></div>
+          <div class="ds-stat">Environment: <span>Edge-IoT live testbed</span></div>
+          <div class="ds-stat">Failures: <span>None across all strategies</span></div>
+          <div class="ds-strategies">
+            <div class="ds-strat-row"><span>Baseline</span><span class="badge badge-safe">SAFE (highest overall)</span></div>
+            <div class="ds-strat-row"><span>DAE</span><span class="badge badge-safe">SAFE</span></div>
+            <div class="ds-strat-row"><span>SCE</span><span class="badge badge-safe">TYPE 1 only</span></div>
+            <div class="ds-strat-row"><span>Class-weight</span><span class="badge badge-safe">BEST mitigation</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-wrap">
+      <div class="section-title">Key findings</div>
+      <div class="finding-list">
+        <div class="finding">
+          <div class="finding-icon">🎯</div>
+          <div>
+            <div class="finding-title">Strategy effectiveness is context-dependent, not intrinsic</div>
+            <div class="finding-body">Class-weight adjustment is simultaneously the most dangerous strategy (DS1, gradient inversion) and the best mitigation strategy (DS3, attack-majority). Identical code, opposite outcomes — determined entirely by class imbalance direction.</div>
+            <div class="finding-num">Supported by DS1 vs DS3 cross-dataset comparison</div>
+          </div>
+        </div>
+        <div class="finding">
+          <div class="finding-icon">📐</div>
+          <div>
+            <div class="finding-title">Estimated Label-Conflict Floor (ELCF) — original contribution</div>
+            <div class="finding-body">642 feature-hash conflicts in DS1 establish a theoretical minimum FNR of ~0.14%. The CNN-LSTM Baseline achieved FNR=0.21% on clean data — within 0.07pp of this floor. Contamination-induced degradation cannot push FNR below the ELCF regardless of model architecture.</div>
+            <div class="finding-num">DS1: 642/127,693 attack records = ~0.14% ELCF</div>
+          </div>
+        </div>
+        <div class="finding">
+          <div class="finding-icon">⚠️</div>
+          <div>
+            <div class="finding-title">AUC-F1 divergence makes Class-weight collapse invisible</div>
+            <div class="finding-body">During Type 2 failure, AUC-ROC remains &gt;0.999 while F1 collapses to ~0.10. A SOC monitoring only AUC would see no signal of failure. Dual-metric monitoring (FNR + F1 alongside AUC) is a necessary safeguard.</div>
+            <div class="finding-num">DS1 Class-weight single-seed reference: AUC=0.999, F1=0.1030 at 10%+ noise</div>
+          </div>
+        </div>
+        <div class="finding">
+          <div class="finding-icon">🔬</div>
+          <div>
+            <div class="finding-title">Imbalance ratio is a causal contributor — controlled study evidence</div>
+            <div class="finding-body">Reducing DS2's ratio from 6.72:1 to exact 1:1 balance (holding all other factors fixed) fully stabilised SCE Type 3b instability. The same manipulation on DS1 produced chaotic instability — indicating an additional unidentified structural factor beyond binary ratio.</div>
+            <div class="finding-num">DS2 1:1: F1=0.960, std&lt;0.01 (N=4). DS1 1:1: F1 range 0.002–0.999 (N=4)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scope-box">
+      <strong>⚠ Research scope:</strong> SCE and class-weight experiments conducted as single-seed reference runs on DS1. Types 2 and 3a should be treated as empirically motivated hypotheses requiring multi-seed validation. Type 3b (DS2 SCE) is multi-seed verified (N=5, 30 runs). Statistical power: N=5 → ~25% power at d=0.5; N=27 required for 80% power.
+      <br><br>
+      <strong>Author:</strong> Maryam Hassanzadeh · st20345688 · Cardiff Metropolitan University · MSc Cybersecurity · 2026
+    </div>
+
+  </div>
+</div><!-- /research-mode -->
+
+</main>
+
+<script>
+// STATE
+const state = { env: null, quality: null, priority: null, resource: null, imbalance: 8.0 };
+let currentStep = 1;
+
+function switchMode(mode) {
+  document.getElementById('advisor-mode').style.display = mode==='advisor' ? 'block' : 'none';
+  document.getElementById('research-mode').style.display = mode==='research' ? 'block' : 'none';
+  document.querySelectorAll('.nav-tab').forEach((t,i) => {
+    t.classList.toggle('active', (mode==='advisor' && i===0) || (mode==='research' && i===1));
+  });
+}
+
+function select(key, val, el) {
+  state[key] = val;
+  el.closest('.options').querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function updateSlider(v) {
+  state.imbalance = parseFloat(v);
+  document.getElementById('slider-display').textContent = parseFloat(v).toFixed(1) + ' : 1';
+}
+
+function goStep(n) {
+  document.getElementById('result').style.display = 'none';
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step'+n).classList.add('active');
+  currentStep = n;
+  updateProgress(n);
+  window.scrollTo({top:60, behavior:'smooth'});
+}
+
+function updateProgress(n) {
+  for(let i=1;i<=4;i++){
+    const ps = document.getElementById('ps'+i);
+    ps.classList.remove('active','done');
+    if(i<n) ps.classList.add('done');
+    else if(i===n) ps.classList.add('active');
+  }
+  for(let i=1;i<=3;i++){
+    const pl = document.getElementById('pl'+i);
+    if(pl) pl.style.background = i<n ? 'var(--safe)' : 'var(--border)';
+  }
+}
+
+function generateResult() {
+  const r = state;
+  const imb = r.imbalance;
+
+  // ---- LOGIC ----
+  let strategy, rationale, confidence, fnrRisk, fprRisk;
+  let notRec = [];
+  let riskRows = [];
+
+  // Determine failure risks based on imbalance
+  const sceRisk   = imb > 10 ? 'critical' : imb > 5 ? 'high' : 'low';
+  const cwRisk    = imb > 10 ? 'critical' : imb > 5 ? 'medium' : 'low';
+  const daeRisk   = (r.resource === 'edge') ? 'medium' : 'low';
+  const baseRisk  = 'low';
+
+  // Primary recommendation
+  if (imb > 10) {
+    // Severe imbalance: DAE or Baseline, avoid SCE/CW
+    if (r.resource === 'edge') {
+      strategy = 'Baseline CNN-LSTM';
+      rationale = 'At severe class imbalance ('+imb.toFixed(1)+':1), both SCE (Type 3a: structural incompatibility) and Class-weight (Type 2: gradient inversion) carry critical failure risk under contamination. With edge compute constraints, DAE preprocessing (107K parameters) is infeasible. Baseline CNN-LSTM is the only safe option — it maintained stable performance across 0–30% noise on DS1 (17.5:1).';
+      confidence = 'High';
+    } else {
+      strategy = 'DAE + CNN-LSTM';
+      rationale = 'At severe class imbalance ('+imb.toFixed(1)+':1), SCE exhibits structural incompatibility (Type 3) and Class-weight exhibits gradient inversion (Type 2). DAE preprocessing provides the safest mitigation — it maintained performance within 0.0005 F1 of Baseline across all contamination levels on DS1 (17.5:1), with no catastrophic failures.';
+      confidence = 'High';
+    }
+    notRec = [
+      { name: 'SCE Loss (alpha=0.01, beta=0.1)', why: 'Type 3 structural incompatibility under severe imbalance. Near-collapse (FNR=25.6%) at 0% noise; full collapse (FNR=100%) at 5%+ noise in reference run. Failure unlikely to be resolved by simple parameter tuning.', type: 'Type 3' },
+      { name: 'Class-weight + CNN-LSTM', why: 'Type 2 gradient inversion. Inverse-frequency amplification applies to noise-corrupted minority labels, inverting gradient direction above ~5.4% noise. AUC remains >0.999 throughout collapse — invisible to AUC-only monitoring.', type: 'Type 2' }
+    ];
+    fnrRisk = r.priority==='fnr' ? 'Low' : 'Low-Medium';
+    fprRisk = 'Medium';
+    confidence = r.quality==='unknown' ? 'Moderate-High' : 'High';
+
+  } else if (imb > 3) {
+    // Moderate imbalance: Baseline best, warn about SCE
+    strategy = 'Baseline CNN-LSTM';
+    rationale = 'At moderate imbalance ('+imb.toFixed(1)+':1), Baseline CNN-LSTM is the safest default. SCE shows Type 3b boundary instability at ~6.7:1 (FNR 19–100% across seeds despite acceptable single-run F1). Class-weight adjustment showed no failure at this range (N=5 on DS2). DAE performs slightly below Baseline due to bottleneck capacity with multiple attack categories.';
+    confidence = 'Moderate-High';
+    notRec = [
+      { name: 'SCE Loss without multi-seed verification', why: 'Type 3b boundary instability at moderate imbalance. Single-run F1 may appear acceptable (~0.967) while FNR reaches 19–100% across seeds. Never rely on a single training run — verify across ≥5 seeds before deployment.', type: 'Type 3b' }
+    ];
+    fnrRisk = r.quality==='low' ? 'Medium' : 'Low-Medium';
+    fprRisk = 'Low-Medium';
+
+  } else if (imb < 1) {
+    // Attack-majority: Class-weight best mitigation
+    strategy = 'Baseline CNN-LSTM';
+    rationale = 'At attack-majority distribution ('+imb.toFixed(1)+':1 benign:attack), Baseline CNN-LSTM achieves the highest overall F1. Class-weight adjustment is the best performing mitigation strategy — the same algorithm that collapses on benign-majority datasets becomes the strongest performer when imbalance direction is inverted. No catastrophic failures were observed on DS3 (0.38:1) for any strategy.';
+    confidence = 'Moderate';
+    notRec = [];
+    fnrRisk = 'Low';
+    fprRisk = 'Low';
+
+  } else {
+    // Near-balanced
+    strategy = 'Baseline CNN-LSTM';
+    rationale = 'At near-balanced distribution ('+imb.toFixed(1)+':1), all strategies are expected to perform well. Baseline CNN-LSTM is recommended as the most stable default with no known failure modes at this imbalance level.';
+    confidence = 'High';
+    notRec = [];
+    fnrRisk = 'Low';
+    fprRisk = 'Low';
+  }
+
+  // Adjust for quality
+  if (r.quality === 'high' && imb < 5) confidence = 'High';
+  if (r.quality === 'unknown') confidence = confidence.includes('High') ? 'Moderate-High' : confidence;
+
+  // Risk table rows
+  riskRows = [
+    { name: 'Baseline CNN-LSTM', risk: baseRisk, mode: 'Type 1: Gradual Attenuation', verdict: strategy==='Baseline CNN-LSTM' ? 'RECOMMENDED' : 'SAFE' },
+    { name: 'DAE + CNN-LSTM', risk: daeRisk, mode: daeRisk==='medium' ? 'Type 4: Bottleneck (edge infeasible)' : 'Type 4: Bottleneck (minor)', verdict: strategy==='DAE + CNN-LSTM' ? 'RECOMMENDED' : (daeRisk==='medium' ? 'CONDITIONAL' : 'SAFE') },
+    { name: 'SCE Loss', risk: sceRisk, mode: imb>10 ? 'Type 3a: Structural Incompatibility' : (imb>5 ? 'Type 3b: Boundary Instability' : 'Type 1 only'), verdict: sceRisk==='critical' ? 'AVOID' : (sceRisk==='high' ? 'CAUTION' : 'CONDITIONAL') },
+    { name: 'Class-weight + CNN-LSTM', risk: cwRisk, mode: imb>10 ? 'Type 2: Gradient Inversion' : (imb<1 ? 'Best mitigation' : 'Type 1 only'), verdict: cwRisk==='critical' ? 'AVOID' : (imb<1 ? 'SAFE' : 'CONDITIONAL') },
+  ];
+
+  // ---- RENDER ----
+  document.getElementById('rec-strategy').textContent = strategy;
+  document.getElementById('rec-rationale').textContent = rationale;
+
+  const confEl = document.getElementById('rec-confidence');
+  confEl.textContent = confidence;
+  confEl.className = 'metric-val ' + (confidence.includes('High') ? 'high' : 'med');
+
+  const fnrEl = document.getElementById('rec-fnr-risk');
+  fnrEl.textContent = fnrRisk;
+  fnrEl.className = 'metric-val ' + (fnrRisk==='Low' ? 'high' : fnrRisk.includes('Medium') ? 'med' : 'low-risk');
+
+  const fprEl = document.getElementById('rec-fpr-risk');
+  fprEl.textContent = fprRisk;
+  fprEl.className = 'metric-val ' + (fprRisk==='Low' ? 'high' : 'med');
+
+  // Risk table
+  const tbody = document.getElementById('risk-table-body');
+  tbody.innerHTML = riskRows.map(r => `
+    <tr>
+      <td><strong>${r.name}</strong></td>
+      <td><span class="badge ${r.risk==='critical'?'badge-danger':r.risk==='high'?'badge-danger':r.risk==='medium'?'badge-warn':'badge-safe'}">${r.risk.toUpperCase()}</span></td>
+      <td style="color:var(--text-mid);font-size:12px;">${r.mode}</td>
+      <td><span class="badge ${r.verdict==='RECOMMENDED'?'badge-info':r.verdict==='SAFE'?'badge-safe':r.verdict==='AVOID'?'badge-danger':'badge-warn'}">${r.verdict}</span></td>
+    </tr>
+  `).join('');
+
+  // Not recommended
+  const nrl = document.getElementById('not-rec-list');
+  if (notRec.length === 0) {
+    nrl.innerHTML = '<div style="color:var(--text-dim);font-size:13px;padding:16px 0;">No strategies are critically contraindicated at this imbalance ratio. Standard monitoring applies.</div>';
+  } else {
+    nrl.innerHTML = notRec.map(n => `
+      <div class="not-rec-item">
+        <div class="not-rec-name">${n.name} <span class="type-tag">${n.type}</span></div>
+        <div class="not-rec-why">${n.why}</div>
+      </div>
+    `).join('');
+  }
+
+  // Show result
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('result').style.display = 'block';
+  window.scrollTo({top:60, behavior:'smooth'});
+}
+
+function resetAdvisor() {
+  Object.assign(state, {env:null,quality:null,priority:null,resource:null,imbalance:8.0});
+  document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+  document.getElementById('imbalance-slider').value = 8;
+  document.getElementById('slider-display').textContent = '8.0 : 1';
+  document.getElementById('result').style.display = 'none';
+  goStep(1);
+}
+
+function toggleTax(el) {
+  el.classList.toggle('expanded');
+}
+</script>
+
+</body>
+</html>
