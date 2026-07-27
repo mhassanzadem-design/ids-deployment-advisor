@@ -1,170 +1,197 @@
-<div id="advisor-root"></div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IDS Deployment Advisor</title>
 <style>
-  #advisor-root {
-    --ink: #0a1a2e;
-    --ink-soft: #3a4a5e;
-    --paper: #f6f5f2;
+  :root {
+    --ink: #131a2b;
+    --ink-soft: #5b6577;
+    --bg: #f4f6fb;
     --panel: #ffffff;
-    --line: #d7d9dc;
-    --line-soft: #e8e9eb;
-    --high: #1a6b52;
-    --high-bg: #e7f2ee;
-    --medium: #92650f;
-    --medium-bg: #fbf1de;
-    --low: #8a4a26;
-    --low-bg: #f7ece2;
-    --insuff: #7a2530;
-    --insuff-bg: #f6e6e8;
-    --accent: #0a1a2e;
-
-    font-family: ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
-    background: var(--paper);
+    --line: #e4e8f0;
+    --blue: #2f5fd8;
+    --blue-soft: #eaf0ff;
+    --blue-dark: #1f3fa8;
+    --green: #1a9e6c;
+    --green-soft: #e4f7ee;
+    --amber: #b7791f;
+    --amber-soft: #fdf3dc;
+    --orange: #c05621;
+    --orange-soft: #fdebdd;
+    --red: #c53030;
+    --red-soft: #fbe4e4;
+    --radius: 16px;
+    --shadow: 0 4px 24px rgba(31, 63, 168, 0.08), 0 1px 3px rgba(31, 63, 168, 0.06);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
     color: var(--ink);
-    padding: 2.5rem 1.25rem 3.5rem;
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
+    line-height: 1.55;
   }
-  #advisor-root * { box-sizing: border-box; }
-  .wrap { max-width: 760px; margin: 0 auto; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 1.25rem 4rem; }
 
-  .masthead { border-bottom: 1px solid var(--line); padding-bottom: 1.25rem; margin-bottom: 2rem; }
+  .hero {
+    background: linear-gradient(135deg, #2f5fd8 0%, #4b7bf5 55%, #6f9cff 100%);
+    color: white;
+    padding: 3rem 1.25rem 3.5rem;
+    margin-bottom: -2rem;
+    border-radius: 0 0 28px 28px;
+  }
+  .hero-inner { max-width: 760px; margin: 0 auto; }
+  .badge-row { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1rem; }
+  .shield {
+    width: 40px; height: 40px; border-radius: 12px;
+    background: rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
+  }
   .eyebrow {
-    font-family: ui-monospace, "SF Mono", Consolas, monospace;
-    font-size: 0.72rem; letter-spacing: 0.09em; text-transform: uppercase;
-    color: var(--ink-soft); margin: 0 0 0.5rem;
+    font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    opacity: 0.9;
   }
-  h1 {
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: clamp(1.6rem, 4vw, 2.15rem);
-    font-weight: 600; margin: 0 0 0.5rem; letter-spacing: -0.01em;
-  }
-  .dek { color: var(--ink-soft); font-size: 0.98rem; margin: 0; max-width: 58ch; }
+  h1 { font-size: clamp(1.75rem, 4.5vw, 2.3rem); font-weight: 800; margin: 0 0 0.6rem; letter-spacing: -0.01em; }
+  .dek { opacity: 0.92; font-size: 1rem; max-width: 56ch; margin: 0; }
 
   .panel {
-    background: var(--panel); border: 1px solid var(--line);
-    border-radius: 3px; padding: 1.75rem;
+    position: relative; z-index: 2;
+    background: var(--panel);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.75rem;
+    margin-top: 2rem;
   }
   .panel + .panel { margin-top: 1.25rem; }
 
-  label { display: block; font-weight: 600; font-size: 0.92rem; margin-bottom: 0.4rem; }
-  .field-help { font-size: 0.82rem; color: var(--ink-soft); margin: 0 0 0.9rem; }
+  label.field-label { display: block; font-weight: 700; font-size: 0.98rem; margin-bottom: 0.3rem; }
+  .field-help { font-size: 0.85rem; color: var(--ink-soft); margin: 0 0 1rem; }
 
-  .ratio-row { display: flex; align-items: baseline; gap: 0.75rem; margin-bottom: 0.4rem; }
   .ratio-readout {
-    font-family: ui-monospace, "SF Mono", Consolas, monospace;
-    font-size: 1.3rem; font-weight: 600; min-width: 6.5ch;
+    font-size: 1.6rem; font-weight: 800; color: var(--blue);
+    text-align: center; margin-bottom: 0.6rem; letter-spacing: 0.02em;
   }
   input[type="range"] {
-    -webkit-appearance: none; width: 100%; height: 3px;
-    background: var(--line); border-radius: 2px; outline-offset: 4px;
+    -webkit-appearance: none; width: 100%; height: 6px;
+    background: linear-gradient(90deg, var(--blue-soft), var(--blue-soft));
+    border-radius: 6px; outline-offset: 4px;
   }
+  input[type="range"]::-webkit-slider-runnable-track { height: 6px; border-radius: 6px; background: #dbe4fb; }
   input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
-    background: var(--ink); cursor: pointer; border: 2px solid var(--panel);
-    box-shadow: 0 0 0 1px var(--ink);
+    -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%;
+    background: var(--blue); cursor: pointer; margin-top: -8px;
+    border: 3px solid white; box-shadow: 0 2px 8px rgba(47,95,216,0.45);
   }
+  input[type="range"]::-moz-range-track { height: 6px; border-radius: 6px; background: #dbe4fb; }
   input[type="range"]::-moz-range-thumb {
-    width: 16px; height: 16px; border-radius: 50%; background: var(--ink);
-    cursor: pointer; border: 2px solid var(--panel); box-shadow: 0 0 0 1px var(--ink);
+    width: 22px; height: 22px; border-radius: 50%; background: var(--blue);
+    cursor: pointer; border: 3px solid white; box-shadow: 0 2px 8px rgba(47,95,216,0.45);
   }
-  .scale-labels { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--ink-soft); margin-top: 0.35rem; font-family: ui-monospace, monospace; }
+  .scale-labels {
+    display: flex; justify-content: space-between; font-size: 0.72rem;
+    color: var(--ink-soft); margin-top: 0.6rem; font-weight: 600;
+  }
 
-  fieldset { border: none; padding: 0; margin: 1.5rem 0 0; }
-  .hint-options { display: grid; gap: 0.5rem; margin-top: 0.5rem; }
+  fieldset { border: none; padding: 0; margin: 1.75rem 0 0; }
+  .hint-options { display: grid; gap: 0.65rem; margin-top: 0.6rem; }
   .hint-option {
-    display: flex; gap: 0.6rem; align-items: flex-start;
-    border: 1px solid var(--line); border-radius: 3px; padding: 0.7rem 0.85rem;
-    cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease;
+    display: flex; gap: 0.75rem; align-items: flex-start;
+    border: 2px solid var(--line); border-radius: 12px; padding: 0.9rem 1rem;
+    cursor: pointer; transition: all 0.15s ease; background: #fbfcfe;
   }
-  .hint-option:hover { border-color: var(--ink-soft); }
-  .hint-option.checked { border-color: var(--ink); background: #fafaf9; }
-  .hint-option input { margin-top: 0.2rem; accent-color: var(--ink); flex-shrink: 0; }
-  .hint-option-text strong { display: block; font-size: 0.9rem; }
-  .hint-option-text span { font-size: 0.8rem; color: var(--ink-soft); }
+  .hint-option:hover { border-color: #b9c9f5; background: var(--blue-soft); }
+  .hint-option.checked { border-color: var(--blue); background: var(--blue-soft); }
+  .hint-option input { margin-top: 0.2rem; accent-color: var(--blue); flex-shrink: 0; width: 18px; height: 18px; }
+  .hint-option-text strong { display: block; font-size: 0.94rem; }
+  .hint-option-text span { font-size: 0.82rem; color: var(--ink-soft); }
 
   button.run {
-    margin-top: 1.5rem; width: 100%; padding: 0.85rem;
-    background: var(--ink); color: var(--paper); border: none; border-radius: 3px;
-    font-size: 0.95rem; font-weight: 600; cursor: pointer;
-    font-family: inherit; letter-spacing: 0.01em;
-    transition: opacity 0.15s ease;
+    margin-top: 1.75rem; width: 100%; padding: 1rem;
+    background: var(--blue); color: white; border: none; border-radius: 12px;
+    font-size: 1.02rem; font-weight: 700; cursor: pointer;
+    font-family: inherit; box-shadow: 0 6px 18px rgba(47,95,216,0.35);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
   }
-  button.run:hover { opacity: 0.88; }
-  button.run:focus-visible, input[type="range"]:focus-visible, .hint-option input:focus-visible {
-    outline: 2px solid var(--ink); outline-offset: 2px;
-  }
+  button.run:hover { background: var(--blue-dark); transform: translateY(-1px); box-shadow: 0 8px 22px rgba(47,95,216,0.4); }
+  button.run:active { transform: translateY(0); }
+  button.run:focus-visible { outline: 3px solid #a9c1ff; outline-offset: 2px; }
 
   .result { display: none; }
-  .result.show { display: block; animation: rise 0.25s ease; }
-  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .result.show { display: block; animation: rise 0.3s ease; }
+  @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-  .result-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .result-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.1rem; flex-wrap: wrap; }
   .badge {
-    font-family: ui-monospace, "SF Mono", Consolas, monospace;
-    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
-    padding: 0.3rem 0.6rem; border-radius: 2px; white-space: nowrap;
+    font-size: 0.76rem; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase;
+    padding: 0.35rem 0.75rem; border-radius: 999px; white-space: nowrap;
   }
-  .badge.High { background: var(--high-bg); color: var(--high); }
-  .badge.Medium { background: var(--medium-bg); color: var(--medium); }
-  .badge.Low { background: var(--low-bg); color: var(--low); }
-  .badge.Insufficient { background: var(--insuff-bg); color: var(--insuff); }
+  .badge.High { background: var(--green-soft); color: var(--green); }
+  .badge.Medium { background: var(--amber-soft); color: var(--amber); }
+  .badge.Low { background: var(--orange-soft); color: var(--orange); }
+  .badge.Insufficient { background: var(--red-soft); color: var(--red); }
+
+  .ratio-echo { font-size: 0.85rem; color: var(--ink-soft); font-weight: 600; }
 
   .recommendation {
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: 1.25rem; font-weight: 600; margin: 0 0 1rem; line-height: 1.35;
+    font-size: 1.3rem; font-weight: 800; margin: 0 0 1.1rem; line-height: 1.35; color: var(--ink);
   }
 
-  .evidence-block {
-    border-left: 2px solid var(--line); padding-left: 0.9rem; margin-bottom: 0.5rem;
-  }
+  .evidence-block { background: #f7f9fd; border-radius: 12px; padding: 1rem 1.1rem; margin-bottom: 0.6rem; }
   .evidence-label {
-    font-family: ui-monospace, monospace; font-size: 0.68rem; letter-spacing: 0.08em;
-    text-transform: uppercase; color: var(--ink-soft); margin: 0 0 0.3rem;
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--blue); margin: 0 0 0.4rem;
   }
-  .evidence-text { font-size: 0.88rem; color: var(--ink-soft); margin: 0; }
-  .evidence-text code {
-    font-family: ui-monospace, "SF Mono", Consolas, monospace;
-    background: var(--line-soft); padding: 0.05rem 0.3rem; border-radius: 2px; font-size: 0.85em;
-  }
+  .evidence-text { font-size: 0.92rem; color: #38415a; margin: 0; }
+  .evidence-text b { color: var(--blue-dark); font-weight: 700; }
 
   .rule-footer {
-    margin-top: 1.1rem; padding-top: 0.9rem; border-top: 1px dashed var(--line);
-    font-family: ui-monospace, monospace; font-size: 0.74rem; color: var(--ink-soft);
+    margin-top: 1rem; padding-top: 0.9rem; border-top: 1px dashed var(--line);
+    font-size: 0.78rem; color: var(--ink-soft);
     display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem;
   }
 
+  .error-box {
+    background: var(--red-soft); color: var(--red); border-radius: 12px;
+    padding: 1rem; font-size: 0.88rem; margin-top: 1rem;
+  }
+
   .scope-note {
-    margin-top: 1.5rem; font-size: 0.82rem; color: var(--ink-soft);
-    border-top: 1px solid var(--line); padding-top: 1.25rem;
+    margin-top: 1.25rem; font-size: 0.85rem; color: var(--ink-soft);
   }
   .scope-note strong { color: var(--ink); }
 
   footer.meta {
-    margin-top: 2rem; font-size: 0.78rem; color: var(--ink-soft);
+    margin-top: 2rem; font-size: 0.8rem; color: var(--ink-soft);
     text-align: center;
   }
-  footer.meta a { color: var(--ink-soft); }
 
   @media (max-width: 520px) {
-    #advisor-root { padding: 1.75rem 1rem 2.5rem; }
+    .hero { padding: 2.25rem 1rem 3rem; }
     .panel { padding: 1.25rem; }
   }
 </style>
+</head>
+<body>
 
-<div class="wrap">
-  <div class="masthead">
-    <p class="eyebrow">Proof-of-concept · MSc Cybersecurity · Cardiff Metropolitan University</p>
+<div class="hero">
+  <div class="hero-inner">
+    <div class="badge-row">
+      <div class="shield">🛡️</div>
+      <span class="eyebrow">Proof-of-concept &middot; MSc Advanced Computer Science &middot; Cardiff Metropolitan University</span>
+    </div>
     <h1>IDS Deployment Advisor</h1>
     <p class="dek">Evidence-cited, conditional guidance for label-noise mitigation strategy selection under class imbalance — reproducing the corrected decision logic in Section 5.2 of the dissertation.</p>
   </div>
+</div>
 
+<div class="wrap">
   <div class="panel">
-    <label for="ratio">Target benign : attack ratio</label>
+    <label class="field-label">Target benign : attack ratio</label>
     <p class="field-help">Estimated class imbalance in your deployment environment.</p>
-    <div class="ratio-row">
-      <span class="ratio-readout" id="ratioReadout">1.0 : 1</span>
-    </div>
-    <input type="range" id="ratio" min="0.38" max="17.5" step="0.01" value="1" aria-describedby="ratioReadout">
+    <div class="ratio-readout" id="ratioReadout">1.0 : 1</div>
+    <input type="range" id="ratio" min="0.38" max="17.5" step="0.01" value="1">
     <div class="scale-labels">
       <span>0.38:1 (DS3)</span>
       <span>1:1 (balance)</span>
@@ -172,102 +199,84 @@
     </div>
 
     <fieldset>
-      <label>Traffic origin hint <span style="font-weight:400;color:var(--ink-soft);">(optional)</span></label>
+      <label class="field-label">Traffic origin hint <span style="font-weight:500;color:var(--ink-soft);">(optional)</span></label>
       <p class="field-help">A qualitative match to the datasets examined, not a measured similarity criterion (Section 5.4).</p>
-      <div class="hint-options" role="radiogroup">
-        <label class="hint-option checked">
+      <div class="hint-options">
+        <label class="hint-option checked" data-opt="unknown">
           <input type="radio" name="hint" value="unknown" checked>
           <span class="hint-option-text"><strong>Unknown</strong><span>No origin information available.</span></span>
         </label>
-        <label class="hint-option">
+        <label class="hint-option" data-opt="physical_iot_device">
           <input type="radio" name="hint" value="physical_iot_device">
           <span class="hint-option-text"><strong>Physical IoT / edge device</strong><span>Resembles DS3's physical IoT/IIoT testbed.</span></span>
         </label>
-        <label class="hint-option">
+        <label class="hint-option" data-opt="simulated_user_traffic">
           <input type="radio" name="hint" value="simulated_user_traffic">
           <span class="hint-option-text"><strong>Simulated user traffic</strong><span>Resembles DS2's simulated-behaviour origin.</span></span>
         </label>
       </div>
     </fieldset>
 
-    <button class="run" id="runBtn">Get recommendation</button>
+    <button class="run" id="runBtn" type="button">Get recommendation</button>
   </div>
 
   <div class="panel result" id="result">
     <div class="result-head">
-      <span class="badge" id="badge"></span>
-      <span style="font-family:ui-monospace,monospace;font-size:0.78rem;color:var(--ink-soft);" id="ratioEcho"></span>
+      <span class="badge" id="badge">—</span>
+      <span class="ratio-echo" id="ratioEcho"></span>
     </div>
     <p class="recommendation" id="recText"></p>
-
     <div class="evidence-block">
       <p class="evidence-label">Evidence</p>
       <p class="evidence-text" id="evidenceText"></p>
     </div>
-
     <div class="rule-footer">
       <span id="ruleId"></span>
       <span id="ruleCitation"></span>
     </div>
   </div>
 
+  <div class="panel" id="errorPanel" style="display:none;">
+    <div class="error-box" id="errorBox"></div>
+  </div>
+
   <p class="scope-note">
-    <strong>Scope of this recommendation.</strong> This tool reproduces the proof-of-concept decision rules documented in Chapter Five and Appendix 5A of the dissertation, validated by controlled multi-seed experiments (N=4–5) across three structurally contrasting NF-* datasets. It has not been evaluated with practising SOC analysts. Testing confirms internal consistency between these outputs and the evidence base — not that following a recommendation improves detection outcomes in live deployment. Local multi-seed validation is required before any deployment decision.
+    <strong>Scope of this recommendation.</strong> This tool reproduces the proof-of-concept decision rules documented in Chapter Five and Appendix 5A of the dissertation, validated by controlled multi-seed experiments (N=4-5) across three structurally contrasting NF-* datasets. It has not been evaluated with practising SOC analysts. Testing confirms internal consistency between these outputs and the evidence base, not that following a recommendation improves detection outcomes in live deployment. Local multi-seed validation is required before any deployment decision.
   </p>
 
   <footer class="meta">
-    Maryam Hassanzadeh · ST20345688 · MSc Cybersecurity, Cardiff Metropolitan University · 2026<br>
+    Maryam Hassanzadeh &middot; ST20345688 &middot; MSc Advanced Computer Science, Cardiff Metropolitan University &middot; 2026<br>
     Faithful reproduction of the corrected logic in Section 5.2 — see the dissertation for the documented correction history (Section 5.1, 5.4).
   </footer>
 </div>
 
 <script>
-(function() {
-  const root = document.getElementById('advisor-root');
-  const ratioInput = root.querySelector('#ratio');
-  const ratioReadout = root.querySelector('#ratioReadout');
-  const hintInputs = root.querySelectorAll('input[name="hint"]');
-  const runBtn = root.querySelector('#runBtn');
-  const result = root.querySelector('#result');
-
   function formatRatio(r) {
-    return (Math.round(r * 100) / 100).toString().replace(/\.00$/, '').replace(/(\.\d)0$/, '$1') + ' : 1';
+    var rounded = Math.round(r * 100) / 100;
+    var s = rounded.toString();
+    if (s.indexOf('.') === -1) { s = s + '.0'; }
+    return s + ' : 1';
   }
 
-  function updateReadout() {
-    ratioReadout.textContent = formatRatio(parseFloat(ratioInput.value));
-  }
-  ratioInput.addEventListener('input', updateReadout);
-  updateReadout();
-
-  root.querySelectorAll('.hint-option').forEach(function(opt) {
-    const input = opt.querySelector('input');
-    input.addEventListener('change', function() {
-      root.querySelectorAll('.hint-option').forEach(function(o) { o.classList.remove('checked'); });
-      opt.classList.add('checked');
-    });
-  });
-
-  // Exact reproduction of the corrected decision function, Section 5.2.
   function idsDeploymentAdvisor(targetRatio, originHint) {
-    const nearBalance = targetRatio >= 0.5 && targetRatio <= 2.0;
+    var nearBalance = targetRatio >= 0.5 && targetRatio <= 2.0;
 
     if (nearBalance) {
       return {
-        recommendation: "Local comparison required (≥3 seeds)",
+        recommendation: "Local comparison required (3 or more seeds)",
         confidence: "Medium",
-        evidence: "DS1 SCE reaches F1=0.979 at 1:1, while DS3 SCE reaches only 0.728 at the same ratio — the benefit of near-balance is real but not uniform across datasets.",
+        evidence: "DS1 SCE reaches F1=0.979 at 1:1, while DS3 SCE reaches only 0.728 at the same ratio. The benefit of near-balance is real but not uniform across datasets.",
         citation: "Table 4.5",
-        ruleId: "rule: near-balance"
+        ruleId: "Rule: near-balance"
       };
     }
     if (originHint === "physical_iot_device" && targetRatio >= 9.0) {
       return {
         recommendation: "Avoid SCE. Class-Weight is not a safe fallback here.",
         confidence: "Insufficient",
-        evidence: "At 17.5:1, SCE collapses (F1=0.016, 96% collapse) and Class-Weight also degrades severely (F1=0.273) — different failure modes, but neither is safe to recommend in this regime.",
-        citation: "Tables 4.5–4.6",
-        ruleId: "rule: physical-iot, ratio ≥ 9:1"
+        evidence: "At 17.5:1, SCE collapses (F1=0.016, 96% collapse) and Class-Weight also degrades severely (F1=0.273). These are different failure modes, but neither is safe to recommend in this regime.",
+        citation: "Tables 4.5-4.6",
+        ruleId: "Rule: physical-iot, ratio >= 9:1"
       };
     }
     if (originHint === "simulated_user_traffic") {
@@ -276,35 +285,78 @@
         confidence: "Low",
         evidence: "DS2 shows 0% SCE collapse across every tested ratio. Similarity to DS2 is an unverified qualitative hint here, not a measured criterion.",
         citation: "Table 4.5",
-        ruleId: "rule: ds2-like hint"
+        ruleId: "Rule: DS2-like hint"
       };
     }
     return {
       recommendation: "Avoid SCE. Origin information is required for a stronger recommendation.",
       confidence: "Low",
-      evidence: "Class-Weight is robust on DS1 but fails severely on DS3 at comparable ratios — behaviour is origin-dependent and cannot be generalised from ratio alone.",
+      evidence: "Class-Weight is robust on DS1 but fails severely on DS3 at comparable ratios. Behaviour is origin-dependent and cannot be generalised from ratio alone.",
       citation: "Tables 4.2, 4.6",
-      ruleId: "rule: default (no matching hint)"
+      ruleId: "Rule: default (no matching hint)"
     };
   }
 
-  runBtn.addEventListener('click', function() {
-    const ratio = parseFloat(ratioInput.value);
-    let hint = 'unknown';
-    hintInputs.forEach(function(i) { if (i.checked) hint = i.value; });
+  window.addEventListener('DOMContentLoaded', function() {
+    try {
+      var ratioInput = document.getElementById('ratio');
+      var ratioReadout = document.getElementById('ratioReadout');
+      var runBtn = document.getElementById('runBtn');
+      var result = document.getElementById('result');
+      var options = document.querySelectorAll('.hint-option');
 
-    const out = idsDeploymentAdvisor(ratio, hint);
+      function updateReadout() {
+        ratioReadout.textContent = formatRatio(parseFloat(ratioInput.value));
+      }
+      ratioInput.addEventListener('input', updateReadout);
+      updateReadout();
 
-    root.querySelector('#badge').textContent = out.confidence;
-    root.querySelector('#badge').className = 'badge ' + out.confidence;
-    root.querySelector('#ratioEcho').textContent = formatRatio(ratio) + (hint !== 'unknown' ? ' · ' + hint.replace(/_/g, ' ') : '');
-    root.querySelector('#recText').textContent = out.recommendation;
-    root.querySelector('#evidenceText').innerHTML = out.evidence.replace(/F1=([\d.]+)/g, '<code>F1=$1</code>');
-    root.querySelector('#ruleId').textContent = out.ruleId;
-    root.querySelector('#ruleCitation').textContent = 'source: ' + out.citation;
+      for (var i = 0; i < options.length; i++) {
+        (function(opt) {
+          var input = opt.querySelector('input');
+          input.addEventListener('change', function() {
+            for (var j = 0; j < options.length; j++) { options[j].classList.remove('checked'); }
+            opt.classList.add('checked');
+          });
+        })(options[i]);
+      }
 
-    result.classList.add('show');
-    result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      runBtn.addEventListener('click', function() {
+        var ratio = parseFloat(ratioInput.value);
+        var hint = 'unknown';
+        var hintInputs = document.querySelectorAll('input[name="hint"]');
+        for (var k = 0; k < hintInputs.length; k++) {
+          if (hintInputs[k].checked) { hint = hintInputs[k].value; }
+        }
+
+        var out = idsDeploymentAdvisor(ratio, hint);
+
+        document.getElementById('badge').textContent = out.confidence;
+        document.getElementById('badge').className = 'badge ' + out.confidence;
+        var hintLabel = hint !== 'unknown' ? ' | ' + hint.replace(/_/g, ' ') : '';
+        document.getElementById('ratioEcho').textContent = formatRatio(ratio) + hintLabel;
+        document.getElementById('recText').textContent = out.recommendation;
+
+        var evidenceHtml = out.evidence.replace(/F1=([0-9.]+)/g, '<b>F1=$1</b>');
+        document.getElementById('evidenceText').innerHTML = evidenceHtml;
+
+        document.getElementById('ruleId').textContent = out.ruleId;
+        document.getElementById('ruleCitation').textContent = 'Source: ' + out.citation;
+
+        result.classList.add('show');
+        result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+
+    } catch (err) {
+      var eb = document.getElementById('errorPanel');
+      var ebox = document.getElementById('errorBox');
+      if (eb && ebox) {
+        eb.style.display = 'block';
+        ebox.textContent = 'Something did not load correctly: ' + err.message;
+      }
+    }
   });
-})();
 </script>
+
+</body>
+</html>
