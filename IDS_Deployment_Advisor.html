@@ -274,7 +274,7 @@
       return {
         recommendation: "Avoid SCE. Class-Weight is not a safe fallback here.",
         confidence: "Insufficient",
-        evidence: "At 17.5:1, SCE collapses (F1=0.016, 96% collapse) and Class-Weight also degrades severely (F1=0.273). These are different failure modes, but neither is safe to recommend in this regime.",
+        evidence: "At 17.5:1, SCE collapses (F1=0.016, 96% collapse) and Class-Weight also degrades severely (F1=0.273). This rule applies from 9:1 upward, but the underlying evidence was measured only at 17.5:1; results at other ratios in this range are extrapolated, not directly tested (Section 5.2).",
         citation: "Tables 4.5-4.6",
         ruleId: "Rule: physical-iot, ratio >= 9:1"
       };
@@ -292,7 +292,7 @@
       recommendation: "Avoid SCE. Origin information is required for a stronger recommendation.",
       confidence: "Low",
       evidence: "Class-Weight is robust on DS1 but fails severely on DS3 at comparable ratios. Behaviour is origin-dependent and cannot be generalised from ratio alone.",
-      citation: "Tables 4.2, 4.6",
+      citation: "Table 4.6",
       ruleId: "Rule: default (no matching hint)"
     };
   }
